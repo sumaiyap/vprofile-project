@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # First service - MySQL Database
+  vprodb:
+    build:
+      context: ./Docker-files/db
+      dockerfile: Dockerfile
+    ports:
+      - "3306:3306" # Maps host port 3306 to container port 3306
+    volumes:
+      - vprodbdata:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=vprodbpass
+
+  # Second service - Application (Tomcat-based)
+  vproapp:
+    build:
+      context: ./Docker-files/app
+    image: vprocontainers/vprofileapp
+    container_name: vproapp
+    ports:
+      - "8080:8080" # Maps host port 8080 to container port 8080
+    volumes:
+      - vproappdata:/usr/local/tomcat/webapps
+
+  # Third service - Web Frontend
+  vproweb:
+    build:
+      context: ./Docker-files/web
+    image: vprocontainers/vprofileweb
+    container_name: vproweb
+    ports:
+      - "80:80" # Maps host port 80 to container port 80
+
+  # Fourth service - Cache (Memcached)
+  vprocache01:
+    image: memcached:latest
+    container_name: vprocache
+    ports:
+      - "11211:11211" # Maps host port 11211 to container port 11211
+
+  # Fifth service - Message Queue (RabbitMQ)
+  vpromq01:
+    image: rabbitmq:3-management # RabbitMQ with management UI
+    container_name: vpromq
+    ports:
+      - "15672:15672" # Management UI
+      - "5672:5672"   # RabbitMQ message broker
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+
+volumes:
+  vprodbdata: {} # Declare named volume for the database
+  vproappdata: {} # Declare named volume for the application
